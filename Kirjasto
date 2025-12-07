@@ -1,0 +1,220 @@
+import time
+import sys
+import numpy
+
+class TUOTTO():
+    Pvm = None
+    Alue1 = None
+    Alue2 = None
+    Alue3 = None
+    Alue4 = None
+
+class PAISTE():
+    Pvm = None
+    Paiste = None
+
+class YHDISTETTY():
+    Pvm = None
+    Alue1 = None
+    Alue2 = None
+    Alue3 = None
+    Alue4 = None
+    Summa = None
+    Paiste = None
+
+def KysyNimi(nimi):
+    tiednimi=input(nimi)
+    while tiednimi[-4:]!=".txt":
+        print("Tiedostopääte väärin. Anna uusi nimi.")
+        tiednimi=input(nimi)
+    return tiednimi
+
+def LueTiedosto(tiednimi,Luetut):
+    Luetut.clear()
+    try:
+        tiedosto = open(tiednimi,"r",encoding="UTF-8")
+        tiedosto.readline()
+        rivi=tiedosto.readline()
+        maara=0
+        while len(rivi)>0:
+            tieto=TUOTTO()
+            osat=rivi.strip().split(";")
+            tieto.Pvm = osat[0]
+            tieto.Alue1=int(osat[1])
+            tieto.Alue2=int(osat[2])
+            tieto.Alue3=int(osat[3])
+            tieto.Alue4=int(osat[4])
+            Luetut.append(tieto)
+            maara=maara+1
+            rivi=tiedosto.readline()
+        tiedosto.close()
+        print("Tiedostosta '{}' lisättiin listaan {} datariviä.".format(tiednimi,maara))
+    except OSError:
+        print("Tiedoston '{}' käsittelyssä virhe, lopetetaan.".format(tiednimi))
+        sys.exit(0)
+    return Luetut
+
+def AnalysoiTiedosto(Luetut,Analysoitu):
+    Analysoitu.clear()
+    A1=[None]*12
+    A2=[None]*12
+    A3=[None]*12
+    A4=[None]*12
+    maara=0
+    for olio in Luetut:
+        pvm=time.strptime(olio.Pvm,"%d/%m/%Y")
+        kk=pvm.tm_mon-1
+        if A1[kk]==None:
+            A1[kk]=0
+        if A2[kk]==None:
+            A2[kk]=0
+        if A3[kk]==None:
+            A3[kk]=0
+        if A4[kk]==None:
+            A4[kk]=0
+        A1[kk]=A1[kk]+olio.Alue1
+        A2[kk]=A2[kk]+olio.Alue2
+        A3[kk]=A3[kk]+olio.Alue3
+        A4[kk]=A4[kk]+olio.Alue4
+    Analysoitu.append("Kuukausittaiset tuotot (kWh):")
+    Analysoitu.append("Kuukausi;Alue1;Alue2;Alue3;Alue4")
+    for i in range(12):
+        kuukausi=time.strftime("%B",time.strptime("1/{}/2000".format(i+1),"%d/%m/%Y"))
+        if not (A1[i]==None and A2[i]==None and A3[i]==None and A4[i]==None):
+            rivi="{};{:.1f};{:.1f};{:.1f};{:.1f}".format(kuukausi,A1[i]/1000,A2[i]/1000,A3[i]/1000,A4[i]/1000)
+            Analysoitu.append(rivi)
+            maara=maara+1
+    print("Kuukausittaiset summat laskettu {} kuukaudelle.".format(maara))
+    A1.clear()
+    A2.clear()
+    A3.clear()
+    A4.clear()
+    return Analysoitu
+
+def KirjoitaTulokset(ktiednimi,Analysoitu):
+    try:
+        tiedosto=open(ktiednimi,"w",encoding="UTF-8")
+        for rivi in Analysoitu:
+            tiedosto.write(rivi+"\n")
+        tiedosto.close()
+        print("Tiedosto '{}' kirjoitettu.".format(ktiednimi))
+    except OSError:
+        print("Tiedoston '{}' käsittelyssä virhe, lopetetaan.".format(ktiednimi))
+        sys.exit(0)
+    return None
+
+def AnalysoiVuodenajat(Luetut,Vuodenaika):
+    Vuodenaika.clear()
+    nimet=["Kevät","Kesä","Syksy","Talvi"]
+    arvot=[0.0,0.0,0.0,0.0]
+    for olio in Luetut:
+        pvm=time.strptime(olio.Pvm,"%d/%m/%Y")
+        kuukausi=pvm.tm_mon
+        summa=olio.Alue1+olio.Alue2+olio.Alue3+olio.Alue4
+        if kuukausi in [3,4,5]:
+            arvot[0]=arvot[0]+summa
+        elif kuukausi in [6,7,8]:
+            arvot[1]=arvot[1]+summa
+        elif kuukausi in [9,10,11]:
+            arvot[2]=arvot[2]+summa
+        else:
+            arvot[3]=arvot[3]+summa
+    Vuodenaika.append("Vuodenaika;Tuotto (kWh)")
+    for i in range(4):
+        rivi="{};{:.1f}".format(nimet[i],arvot[i]/1000)
+        Vuodenaika.append(rivi)
+    arvot.clear()
+    nimet.clear()
+    return Vuodenaika
+
+def LuePaisteLista(tiednimi,PaisteLista):
+    PaisteLista.clear()
+    try:
+        tiedosto=open(tiednimi,"r",encoding="UTF-8")
+        tiedosto.readline()
+        rivi=tiedosto.readline()
+        while len(rivi)>0:
+            osat=rivi.strip().split(",")
+            paiste=PAISTE()
+            paiste.Pvm="{:02d}.{:02d}.{}".format(int(osat[3]),int(osat[2]),osat[1])
+            paiste.Paiste=int(osat[4])
+            PaisteLista.append(paiste)
+            rivi=tiedosto.readline()
+        tiedosto.close()
+        print("Tiedosto '{}' luettu.".format(tiednimi))
+        print("Tiedot yhdistetty.")
+    except OSError:
+        print("Tiedoston '{}' käsittelyssä virhe, lopetetaan.".format(tiednimi))
+        sys.exit(0)
+    return PaisteLista
+
+def YhdistaListat(Luetut,PaisteLista,Yhdistetty):
+    Yhdistetty.clear()
+    for olio in Luetut:
+        yhd=YHDISTETTY()
+        yhd.Pvm=olio.Pvm
+        yhd.Alue1=olio.Alue1
+        yhd.Alue2=olio.Alue2
+        yhd.Alue3=olio.Alue3
+        yhd.Alue4=olio.Alue4
+        yhd.Summa=olio.Alue1+olio.Alue2+olio.Alue3+olio.Alue4
+        yhd.Paiste=0
+        pvm=time.strptime(olio.Pvm,"%d/%m/%Y")
+        vertailupvm=time.strftime("%d.%m.%Y",pvm)
+        for paiste in PaisteLista:
+            if paiste.Pvm==vertailupvm and yhd.Paiste==0:
+                yhd.Paiste=paiste.Paiste
+        Yhdistetty.append(yhd)
+    return Yhdistetty
+
+def KirjoitaYhdistetty(ktiednimi,Yhdistetty):
+    try:
+        tiedosto=open(ktiednimi,"w",encoding="UTF-8")
+        tiedosto.write("Päivittäiset tuotot (Wh) ja paisteaika (s):\n")
+        tiedosto.write("Aikaleima;Alue 1 (Wh);Alue 2 (Wh);Alue 3 (Wh);Alue 4 (Wh);Päiväsumma (Wh);Paisteaika (s)\n")
+        for olio in Yhdistetty:
+            pvm=time.strptime(olio.Pvm,"%d/%m/%Y")
+            uusipvm=time.strftime("%d.%m.%Y",pvm)
+            rivi="{};{};{};{};{};{};{}".format(uusipvm,olio.Alue1,olio.Alue2,olio.Alue3,olio.Alue4,olio.Summa,olio.Paiste)
+            tiedosto.write(rivi+"\n")
+        tiedosto.close()
+        print("Tiedosto '{}' kirjoitettu.".format(ktiednimi))
+    except OSError:
+        print("Tiedoston '{}' käsittelyssä virhe, lopetetaan.".format(ktiednimi))
+        sys.exit(0)
+    return None
+
+def AnalysoiViikot(Luetut,ViikkoMat):
+    ViikkoMat[:]=0
+    paneelit=numpy.array([330,210,66,210],float)
+    for olio in Luetut:
+        pvm=time.strptime(olio.Pvm,"%d/%m/%Y")
+        vko=int(time.strftime("%W",pvm))
+        arvot=numpy.array([float(olio.Alue1),float(olio.Alue2),float(olio.Alue3),float(olio.Alue4)])
+        ViikkoMat[vko]=ViikkoMat[vko]+(arvot/paneelit)
+    print("Matriisianalyysi suoritettu.")
+    return ViikkoMat
+
+def KirjoitaViikot(ktiednimi,ViikkoMat):
+    paneelit=numpy.array([330,210,66,210], float)
+    try:
+        tiedosto=open(ktiednimi, "w", encoding="UTF-8")
+        tiedosto.write("Viikko;Alue 1 (Wh/paneeli);Alue 2 (Wh/paneeli);Alue 3 (Wh/paneeli);Alue 4 (Wh/paneeli);Viikkosumma (Wh)\n")
+        for i in range(54):
+            summa=numpy.sum(ViikkoMat[i,:]*paneelit)
+            rivi="Vko {};{:.1f};{:.1f};{:.1f};{:.1f};{:.1f}\n".format(i,ViikkoMat[i,0],ViikkoMat[i,1],ViikkoMat[i,2],ViikkoMat[i,3],summa)
+            tiedosto.write(rivi)
+        sarakkeet=numpy.sum(ViikkoMat,axis=0)
+        Whsarakkeet=sarakkeet*paneelit
+        kokonaiss=numpy.sum(sarakkeet*paneelit)
+        riviyht="Yhteensä;{:.1f};{:.1f};{:.1f};{:.1f};{:.1f}".format(Whsarakkeet[0],Whsarakkeet[1],Whsarakkeet[2],Whsarakkeet[3],kokonaiss)
+        tiedosto.write(riviyht)
+        tiedosto.close()
+        print("Tiedosto '{}' kirjoitettu.".format(ktiednimi))
+    except OSError:
+        print("Tiedoston '{}' käsittelyssä virhe, lopetetaan.".format(ktiednimi))
+        sys.exit(0)
+    return None
+
+######################################################################
+#eof

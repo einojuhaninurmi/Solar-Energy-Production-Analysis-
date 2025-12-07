@@ -1,0 +1,86 @@
+import HTTavoiteKirjasto
+import numpy
+
+def valikko():
+    print("Valitse haluamasi toiminto:")
+    print("1) Lue tiedosto")
+    print("2) Analysoi")
+    print("3) Kirjoita tiedosto")
+    print("4) Analysoi vuodenaikatulokset")
+    print("5) Lue ja yhdistä paisteaikatiedosto")
+    print("6) Kirjoita yhdistetty data tiedostoon")
+    print("7) Analysoi viikoittaiset tulokset")
+    print("0) Lopeta")
+    valinta=int(input("Anna valintasi: "))
+    return valinta
+
+def paaohjelma():
+    Luetut=[]
+    Analysoitu=[]
+    Vuodenaika=[]
+    PaisteLista=[]
+    Yhdistetty=[]
+    ViikkoMat=numpy.zeros((54,4), float)
+    valinta=-1
+
+    while valinta!=0:
+        valinta=valikko()
+        if valinta==1:
+            tiednimi=HTTavoiteKirjasto.KysyNimi("Anna luettavan tiedoston nimi: ")
+            Luetut=HTTavoiteKirjasto.LueTiedosto(tiednimi,Luetut)
+        elif valinta==2:
+            if len(Luetut)>0:
+                Analysoitu=HTTavoiteKirjasto.AnalysoiTiedosto(Luetut,Analysoitu)
+            else:
+                print("Ei tietoja analysoitavaksi, lue tiedot ennen analyysiä.")
+        elif valinta==3:
+            if len(Analysoitu)>0:
+                ktiednimi=HTTavoiteKirjasto.KysyNimi("Anna kirjoitettavan tiedoston nimi: ")
+                HTTavoiteKirjasto.KirjoitaTulokset(ktiednimi,Analysoitu)
+            else:
+                print("Ei tietoja tallennettavaksi, analysoi tiedot ennen tallennusta.")
+        elif valinta==4:
+            if len(Luetut)>0:
+                Vuodenaika=HTTavoiteKirjasto.AnalysoiVuodenajat(Luetut, Vuodenaika)
+                ktiednimi=HTTavoiteKirjasto.KysyNimi("Anna kirjoitettavan tiedoston nimi: ")
+                HTTavoiteKirjasto.KirjoitaTulokset(ktiednimi,Vuodenaika)
+            else:
+                print("Ei tietoja analysoitavaksi, lue tiedot ennen analyysiä.")
+        elif valinta==5:
+            if len(Luetut)>0:
+                tiednimi=HTTavoiteKirjasto.KysyNimi("Anna luettavan tiedoston nimi: ")
+                PaisteLista=HTTavoiteKirjasto.LuePaisteLista(tiednimi,PaisteLista)
+                Yhdistetty=HTTavoiteKirjasto.YhdistaListat(Luetut,PaisteLista, Yhdistetty)
+            else:
+                print("Lue sähköntuottotiedot ennen paisteaikatietoja.")
+        elif valinta==6:
+            if len(Yhdistetty)>0:
+                ktiednimi=HTTavoiteKirjasto.KysyNimi("Anna kirjoitettavan tiedoston nimi: ")
+                HTTavoiteKirjasto.KirjoitaYhdistetty(ktiednimi,Yhdistetty)
+            else:
+                print("Ei tietoja tallennettavaksi, analysoi tiedot ennen tallennusta.")
+        elif valinta==7:
+            if len(Luetut)>0:
+                ViikkoMat[:]=0
+                ViikkoMat=HTTavoiteKirjasto.AnalysoiViikot(Luetut,ViikkoMat)
+                ktiednimi=HTTavoiteKirjasto.KysyNimi("Anna kirjoitettavan tiedoston nimi: ")
+                HTTavoiteKirjasto.KirjoitaViikot(ktiednimi,ViikkoMat)
+            else:
+                print("Ei tietoja analysoitavaksi, lue tiedot ennen analyysiä.")
+        elif valinta==0:
+            print("Lopetetaan.")
+        else:
+            print("Tuntematon valinta, yritä uudestaan.")
+        print()
+    print("Kiitos ohjelman käytöstä.")
+    Luetut.clear()
+    Analysoitu.clear()
+    Vuodenaika.clear()
+    PaisteLista.clear()
+    Yhdistetty.clear()
+    ViikkoMat=numpy.delete(ViikkoMat,numpy.s_[:],None)
+    return None
+
+paaohjelma()
+######################################################################
+# eof
